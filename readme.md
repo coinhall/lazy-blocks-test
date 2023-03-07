@@ -1,52 +1,30 @@
-# test
-**test** is a blockchain built using Cosmos SDK and Tendermint and created with [Ignite CLI](https://ignite.com/cli).
+# Lazy Block Production
 
-## Get started
+## Manual Testing
 
-```
-ignite chain serve
-```
+> Assumes [Ignite CLI](https://docs.ignite.com/welcome/install) is already installed (though it's only used in the first step to help bootstrap all the necessary genesis files and accounts).
 
-`serve` command installs dependencies, builds, initializes, and starts your blockchain in development.
+1. Initialise chain using Ignite CLI: `git checkout 33b3528 && ignite chain init && git checkout main`
+   - For unknown reasons, the `ignite chain init` command does not work while in `main`
+   - Note down the address of `alice` and `bob` so that we can use them later
+2. In the `~/.test/config.toml` file, set and ensure `create_empty_blocks = false`
+3. Build the binary: `go build -o testd cmd/testd/main.go`
+4. Start the chain in another terminal: `./testd start`
+   - Notice that the block height halts at `2` (use `./testd status | jq` to verify)
+5. Send some funds from `alice` to `bob`: `./testd bank send ALICE_ADDR BOB_ADDR 1token`
+   - Notice that the block height now halts at `4` which means an increment of 2 blocks (this seems like the "correct behaviour" according to this [forum post](https://forum.cosmos.network/t/turning-create-empty-blocks-to-false-has-no-effect/737/7))
+   - Use `./testd query bank balances ALICE_ADDR` to confirm that the balance of `alice` is `1token` less
 
-### Configure
+Once done, you may reset all chain state and repeat from step 4 for further tests: `./testd tendermint unsafe-reset-all`
 
-Your blockchain in development can be configured with `config.yml`. To learn more, see the [Ignite CLI docs](https://docs.ignite.com).
+## Code Changes
 
-### Web Frontend
+In chronological order:
 
-Ignite CLI has scaffolded a Vue.js-based web app in the `vue` directory. Run the following commands to install dependencies and start the app:
-
-```
-cd vue
-npm install
-npm run serve
-```
-
-The frontend app is built using the `@starport/vue` and `@starport/vuex` packages. For details, see the [monorepo for Ignite front-end development](https://github.com/ignite/web).
-
-## Release
-To release a new version of your blockchain, create and push a new tag with `v` prefix. A new draft release with the configured targets will be created.
-
-```
-git tag v0.1
-git push origin v0.1
-```
-
-After a draft release is created, make your final changes from the release page and publish it.
-
-### Install
-To install the latest version of your blockchain node's binary, execute the following command on your machine:
-
-```
-curl https://get.ignite.com/coinhall/test@latest! | sudo bash
-```
-`coinhall/test` should match the `username` and `repo_name` of the Github repository to which the source code was pushed. Learn more about [the install process](https://github.com/allinbits/starport-installer).
-
-## Learn more
-
-- [Ignite CLI](https://ignite.com/cli)
-- [Tutorials](https://docs.ignite.com/guide)
-- [Ignite CLI docs](https://docs.ignite.com)
-- [Cosmos SDK docs](https://docs.cosmos.network)
-- [Developer Chat](https://discord.gg/ignite)
+1. With reference to commit `33b3528`: this repository was scaffolded using Ignite CLI's `ignite scaffold chain` command (without the `pkg` directory)
+2. With reference to commit `8532399`: the Tendermint (`v0.34.24`) and Cosmos SDK (`v0.46.7`) codebases were cloned as is into the`pkg` directory
+3. With reference to commit `8ecfc92`: the `replace` directive was added to the `go.mod` and `pkg/cosmos-sdk/go.mod` files to point to the local Tendermint package located at `pkg/tendermint`
+   - At this point, there are zero changes to the underlying source code, and the blockchain should run as per normal (ie. producing blocks every second)
+4. With reference to commit `1562834`: the local Tendermint and Cosmos SDk pkgs were updated to reflect the following PRs:
+   1. Mark "proof blocks" on Tendermint: <https://github.com/tendermint/tendermint/pull/10004>
+   2. Ignore "proof blocks" on Cosmos SDK: <https://github.com/cosmos/cosmos-sdk/pull/15148>
