@@ -1,0 +1,7 @@
+syntax = "proto3";
+package coinhall.test.test;
+
+option go_package = "github.com/coinhall/test/x/test/types";
+
+// Msg defines the Msg service.
+service Msg {}
