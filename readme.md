@@ -11,7 +11,7 @@
 3. Build the binary: `go build -o testd cmd/testd/main.go`
 4. Start the chain in another terminal: `./testd start`
    - Notice that the block height halts at `2` (use `./testd status | jq` to verify)
-5. Send some funds from `alice` to `bob`: `./testd bank send ALICE_ADDR BOB_ADDR 1token`
+5. Send some funds from `alice` to `bob`: `./testd tx bank send ALICE_ADDR BOB_ADDR 1token`
    - Notice that the block height now halts at `4` which means an increment of 2 blocks (this seems like the "correct behaviour" according to this [forum post](https://forum.cosmos.network/t/turning-create-empty-blocks-to-false-has-no-effect/737/7))
    - Use `./testd query bank balances ALICE_ADDR` to confirm that the balance of `alice` is `1token` less
 
